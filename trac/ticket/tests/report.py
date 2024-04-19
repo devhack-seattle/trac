@@ -422,11 +422,11 @@ class ReportModuleTestCase(unittest.TestCase):
         rendered = self._render_template(req, *rv)
         rendered = str(rendered, 'utf-8')
         self.assertRegex(rendered,
-            r'<td class="date">\s*(12:00:42 AM|00:00:42)\s*</td>')
+            r'<td class="date">\s*(12:00:42\sAM|00:00:42)\s*</td>')
         self.assertRegex(rendered,
             r'<td class="date">\s*(Jan 3, 1970|01/03/(19)?70)\s*</td>')
         self.assertRegex(rendered,
-            r'<td class="date">\s*(Jan 4, 1970, 12:00:44 AM|'
+            r'<td class="date">\s*(Jan 4, 1970, 12:00:44\sAM|'
             r'01/04/(19)?70 00:00:44)\s*</td>')
         self.assertRegex(rendered,
             r'<td class="date">\s*<a class="timeline" href="[^"]*" '
@@ -446,11 +446,11 @@ class ReportModuleTestCase(unittest.TestCase):
         self.assertRegex(rendered,
             r'<td class="date">\s*<a class="timeline" href="[^"]*" '
             r'title="See timeline [^"]+ ago">on (Sep 13, 2021|09/13/21) '
-            r'at (12:13:16 PM|12:13:16)</a>\s*</td>')
+            r'at (12:13:16\sPM|12:13:16)</a>\s*</td>')
         self.assertRegex(rendered,
             r'<td class="date">\s*<a class="timeline" href="[^"]*" '
             r'title="See timeline [^"]+ ago">on (Sep 12, 2021|09/12/21) '
-            r'at (12:13:15 PM|12:13:15)</a>\s*</td>')
+            r'at (12:13:15\sPM|12:13:15)</a>\s*</td>')
 
 
 class ExecuteReportTestCase(unittest.TestCase):
