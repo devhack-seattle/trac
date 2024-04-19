@@ -305,8 +305,9 @@ class ChromeTestCase(unittest.TestCase):
 
     @unittest.skipUnless(has_babel, 'Babel unavailable')
     def test_add_jquery_ui_available_locales(self):
+        from babel.core import Locale
         for locale in get_available_locales():
-            locale = get_negotiated_locale([locale])
+            locale = Locale.parse(locale)
             data = self._get_jquery_ui_script_data(locale)
 
     def test_invalid_default_dateinfo_format_raises_exception(self):
