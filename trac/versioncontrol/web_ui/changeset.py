@@ -686,7 +686,7 @@ class ChangesetModule(Component):
         if Chrome(self.env).use_chunked_encoding:
             length = None
         else:
-            output = ''.join(output)
+            output = b''.join(output)
             length = len(output)
 
         req.send_response(200)
