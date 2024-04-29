@@ -336,16 +336,19 @@ def main():
                 print("[Errno %s] %s" % e.args)
                 sys.exit(1)
 
-            print("Server starting in PID %s." % os.getpid())
-            print("Serving on %s" % loc)
-            if args.http11:
-                print("Using HTTP/1.1 protocol version")
-            if args.protocol == 'https':
-                httpd.socket = ssl.wrap_socket(httpd.socket, server_side=True,
-                                               certfile=args.certfile,
-                                               keyfile=args.keyfile)
-                httpd.environ['HTTPS'] = 'yes'
-            httpd.serve_forever()
+            with httpd:
+                print("Server starting in PID %s." % os.getpid())
+                print("Serving on %s" % loc)
+                if args.http11:
+                    print("Using HTTP/1.1 protocol version")
+                if args.protocol == 'https':
+                    httpd.socket = ssl.wrap_socket(httpd.socket,
+                                                   server_side=True,
+                                                   certfile=args.certfile,
+                                                   keyfile=args.keyfile)
+                    httpd.environ['HTTPS'] = 'yes'
+                httpd.serve_forever()
+
     elif args.protocol in ('scgi', 'ajp', 'fcgi'):
         def serve():
             module = 'flup.server.%s' % args.protocol
