@@ -342,10 +342,11 @@ def main():
                 if args.http11:
                     print("Using HTTP/1.1 protocol version")
                 if args.protocol == 'https':
-                    httpd.socket = ssl.wrap_socket(httpd.socket,
-                                                   server_side=True,
-                                                   certfile=args.certfile,
-                                                   keyfile=args.keyfile)
+                    ctxt = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+                    ctxt.load_cert_chain(certfile=args.certfile,
+                                         keyfile=args.keyfile)
+                    httpd.socket = ctxt.wrap_socket(httpd.socket,
+                                                    server_side=True)
                     httpd.environ['HTTPS'] = 'yes'
                 httpd.serve_forever()
 
