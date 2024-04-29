@@ -11,6 +11,7 @@
 # individuals. For the exact contribution history, see the revision
 # history and logs, available at https://trac.edgewall.org/log/.
 
+from datetime import datetime
 import io
 import os.path
 import textwrap
@@ -20,7 +21,7 @@ from trac import perm
 from trac.core import TracError
 from trac.test import EnvironmentStub, MockPerm, makeSuite, mkdtemp, rmtree
 from trac.util import create_file
-from trac.util.datefmt import utc
+from trac.util.datefmt import timezone, utc
 from trac.util.html import tag
 from trac.web.api import HTTPBadRequest, HTTPInternalServerError, Request, \
                          RequestDone, parse_arg_list
@@ -631,6 +632,75 @@ new\r\n\
         self.assertFalse(Request.is_valid_header('X-Custom-:2:', 'custom2'))
         self.assertTrue(Request.is_valid_header('Aa0-!#$%&\'*+.^_`|~',
                                                 'custom2'))
+
+    def _test_check_modified_etag(self, expected, authname, *args, **kwargs):
+        req = _make_req(_make_environ(), authname=authname)
+        req.check_modified(*args, **kwargs)
+        with self.assertRaises(RequestDone):
+            req.send(b'')
+        self.assertEqual(expected, req.headers_sent['ETag'])
+
+    def test_check_modified_authname(self):
+        t = datetime(2024, 4, 22, 12, 34, 56, 12345, utc)
+        self._test_check_modified_etag(
+            'W/"0DPiKuNIrrVmD8IUCuw1hQxNqZc/2024-04-22T12:34:56.012345Z/"',
+            'admin', datetime=t)
+        self._test_check_modified_etag(
+            'W/"3sAdZcyug-g4CG4Hw22qbDsNFZg/2024-04-22T12:34:56.012345Z/"',
+            'föøbär', datetime=t)
+        self._test_check_modified_etag(
+            'W/"XbsQF2sFKvX58cq-6LFkEsrM7x8/2024-04-22T12:34:56.012345Z/"',
+            'ad"min', datetime=t)
+        self._test_check_modified_etag(
+            'W/"9KeuwlhgoBlSlcYC2HT5CioCp6A/2024-04-22T12:34:56.012345Z/"',
+            'adm\x7fin', datetime=t)
+        self._test_check_modified_etag(
+            'W/"N3PeplFWkJg4-mwiglyv4JD_gDA/2024-04-22T12:34:56.012345Z/"',
+            'foo bar', datetime=t)
+
+    def test_check_modified_datetime(self):
+        tz = timezone('GMT -11:00')
+        self._test_check_modified_etag(
+            'W/"0DPiKuNIrrVmD8IUCuw1hQxNqZc/2024-04-22T23:34:56Z/"',
+            'admin', datetime=datetime(2024, 4, 22, 12, 34, 56, 0, tz))
+        self._test_check_modified_etag(
+            'W/"0DPiKuNIrrVmD8IUCuw1hQxNqZc/2024-04-22T22:34:56.012345Z/"',
+            'admin', datetime=datetime(2024, 4, 22, 11, 34, 56, 12345, tz))
+        self._test_check_modified_etag(
+            'W/"0DPiKuNIrrVmD8IUCuw1hQxNqZc/2024-04-22T21:34:56.987000Z/"',
+            'admin', datetime=datetime(2024, 4, 22, 10, 34, 56, 987000, tz))
+
+    def test_check_modified_extra(self):
+        t = datetime(2024, 4, 21, 13, 45, 34, 98765, utc)
+        self._test_check_modified_etag(
+            'W/"0DPiKuNIrrVmD8IUCuw1hQxNqZc/2024-04-21T13:45:34.098765Z'
+            '/x9K8LITGtvCTPiKASe2O827raFs"',
+            'admin', datetime=t, extra=[None, 42, [42], {42: 42}])
+
+    def test_check_modified_if_none_match(self):
+        etag = 'W/"0DPiKuNIrrVmD8IUCuw1hQxNqZc/2024-04-19T15:12:23.012345Z/"'
+        t = datetime(2024, 4, 19, 15, 12, 23, 12345, utc)
+
+        req = _make_req(_make_environ(HTTP_IF_NONE_MATCH=etag),
+                        authname='admin')
+        with self.assertRaises(RequestDone):
+            req.check_modified(t)
+        self.assertEqual(['304 Not Modified'], req.status_sent)
+        self.assertEqual('0', req.headers_sent['Content-Length'])
+
+        req = _make_req(_make_environ(HTTP_IF_NONE_MATCH='XXXXX'),
+                        authname='admin')
+        req.check_modified(t)
+        with self.assertRaises(RequestDone):
+            req.send(b'')
+        self.assertEqual(etag, req.headers_sent['ETag'])
+
+        # No If-None-Match header
+        req = _make_req(_make_environ(), authname='admin')
+        req.check_modified(t)
+        with self.assertRaises(RequestDone):
+            req.send(b'')
+        self.assertEqual(etag, req.headers_sent['ETag'])
 
 
 class RequestSendFileTestCase(unittest.TestCase):

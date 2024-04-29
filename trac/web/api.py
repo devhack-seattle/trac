@@ -18,6 +18,7 @@ from abc import ABCMeta
 from http.cookies import CookieError, BaseCookie, SimpleCookie
 from http.server import BaseHTTPRequestHandler
 from datetime import datetime
+import base64
 import hashlib
 import io
 import mimetypes
@@ -38,7 +39,7 @@ else:
 from trac.core import Interface, TracBaseError, TracError
 from trac.util import as_bool, as_int, get_last_traceback, lazy, \
                       normalize_filename
-from trac.util.datefmt import http_date, localtz
+from trac.util.datefmt import http_date, localtz, to_datetime, utc
 from trac.util.html import Fragment, tag
 from trac.util.text import empty, exception_to_unicode, to_unicode
 from trac.util.translation import _, N_, tag_
@@ -814,12 +815,24 @@ class Request(object):
         Otherwise, it adds the entity tag as an "ETag" header to the response
         so that consecutive requests can be cached.
         """
-        if isinstance(extra, list):
+
+        # In <RFC9110 8.8.3. ETag>, the value enclosed with double quotes
+        # allows %x21 / %x23-7E / %x80-FF bytes (except SPACE, <">, DEL).
+        # However, WSGI requires latin-1 encoding in the headers. We use sha1
+        # and urlsafe-base64 encoded for the value.
+        def digest_base64(iterable):
             m = hashlib.sha1()
-            for elt in extra:
-                m.update(repr(elt).encode('utf-8'))
-            extra = m.hexdigest()
-        etag = 'W/"%s/%s/%s"' % (self.authname, http_date(datetime), extra)
+            for item in iterable:
+                m.update(item.encode('utf-8'))
+            digest = m.digest()
+            encoded = base64.urlsafe_b64encode(digest).rstrip(b'=')
+            return str(encoded, 'ascii')
+
+        if isinstance(extra, list):
+            extra = digest_base64(map(repr, extra))
+        authname = digest_base64([self.authname])
+        ts = to_datetime(datetime, utc).isoformat().replace('+00:00', 'Z')
+        etag = 'W/"%s/%s/%s"' % (authname, ts, extra)
         inm = self.get_header('If-None-Match')
         if not inm or inm != etag:
             self.send_header('ETag', etag)
