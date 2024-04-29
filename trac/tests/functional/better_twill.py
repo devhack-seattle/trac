@@ -20,6 +20,7 @@ import contextlib
 import hashlib
 import http.client
 import http.server
+import inspect
 import locale
 import re
 import os.path
@@ -67,6 +68,10 @@ finally:
     if _curr != locale.setlocale(locale.LC_ALL, None):
         locale.setlocale(locale.LC_ALL, _curr)
     del _curr
+
+
+def _has_arg(f, name):
+    return name in inspect.signature(f).parameters
 
 
 if selenium:
@@ -137,13 +142,28 @@ if selenium:
             options.log.level = 'info'
             log_path = 'geckodriver.log'
             open(log_path, 'wb').close()
-            service = webdriver.firefox.service.Service(log_path=log_path)
+
+            if _has_arg(webdriver.Firefox, 'service'):
+                if hasattr(webdriver, 'FirefoxService'):
+                    FirefoxService = webdriver.FirefoxService
+                else:
+                    FirefoxService = webdriver.firefox.service.Service
+                if _has_arg(FirefoxService, 'log_output'):
+                    service = FirefoxService(log_output=log_path)
+                else:
+                    service = FirefoxService(log_path=log_path)
+                def launch():
+                    return webdriver.Firefox(options=options, service=service)
+            else:
+                service = None
+                def launch():
+                    return webdriver.Firefox(options=options,
+                                             service_log_path=log_path)
 
             n = 1
-            startts = time.time()
-            while time.time() - startts < 60:
+            while True:
                 try:
-                    return webdriver.Firefox(options=options, service=service)
+                    return launch()
                 except TimeoutException:
                     if n >= 20:
                         raise
