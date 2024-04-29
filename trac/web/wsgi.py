@@ -285,3 +285,11 @@ class WSGIServer(HTTPServer):
         self.environ = {'SERVER_NAME': self.server_name,
                         'SERVER_PORT': str(self.server_port),
                         'SCRIPT_NAME': ''}
+
+    if not hasattr(HTTPServer, '__enter__'):
+        def __enter__(self):
+            return self
+
+    if not hasattr(HTTPServer, '__exit__'):
+        def __exit__(self, *args):
+            self.server_close()
