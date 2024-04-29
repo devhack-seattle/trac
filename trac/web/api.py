@@ -470,6 +470,33 @@ def arg_list_to_args(arg_list):
     return args
 
 
+if hasattr(str, 'isascii'):
+    _isascii = lambda value: value.isascii()
+else:
+    _is_non_ascii_re = re.compile(r'[^\x00-\x7f]')
+    _isascii = lambda value: not _is_non_ascii_re.search(value)
+
+
+def wsgi_string_decode(value):
+    """Convert from a WSGI "bytes-as-unicode" string to an unicode string.
+    """
+    if not isinstance(value, str):
+        raise TypeError('Must a str instance rather than %s' % type(value))
+    if not _isascii(value):
+        value = value.encode('iso-8859-1').decode('utf-8')
+    return value
+
+
+def wsgi_string_encode(value):
+    """Convert from an unicode string to a WSGI "bytes-as-unicode" string.
+    """
+    if not isinstance(value, str):
+        raise TypeError('Must a str instance rather than %s' % type(value))
+    if not _isascii(value):
+        value = value.encode('utf-8').decode('iso-8859-1')
+    return value
+
+
 def _raise_if_null_bytes(value):
     if value and '\x00' in value:
         raise HTTPBadRequest(_("Invalid request arguments."))
@@ -666,7 +693,7 @@ class Request(object):
 
     def __repr__(self):
         uri = self.environ.get('PATH_INFO', '')
-        qs = self.query_string
+        qs = self.environ.get('QUERY_STRING', '')
         if qs:
             uri += '?' + qs
         return '<%s "%s %r">' % (self.__class__.__name__, self.method, uri)
@@ -698,21 +725,16 @@ class Request(object):
     def path_info(self):
         """Path inside the application"""
         path_info = self.environ.get('PATH_INFO', '')
-        if isinstance(path_info, str):
-            # According to PEP 3333, the value is decoded by iso-8859-1
-            # encoding when it is a unicode string. However, we need
-            # decoded unicode string by utf-8 encoding.
-            path_info = path_info.encode('iso-8859-1')
         try:
-            return str(path_info, 'utf-8')
-        except UnicodeDecodeError:
+            return wsgi_string_decode(path_info)
+        except UnicodeError:
             raise HTTPNotFound(_("Invalid URL encoding (was %(path_info)r)",
                                  path_info=path_info))
 
     @property
     def query_string(self):
         """Query part of the request"""
-        return self.environ.get('QUERY_STRING', '')
+        return wsgi_string_decode(self.environ.get('QUERY_STRING', ''))
 
     @property
     def remote_addr(self):
@@ -727,7 +749,7 @@ class Request(object):
         """
         user = self.environ.get('REMOTE_USER')
         if user is not None:
-            return to_unicode(user)
+            return wsgi_string_decode(user)
 
     @property
     def request_path(self):
@@ -745,7 +767,7 @@ class Request(object):
     @property
     def base_path(self):
         """The root path of the application"""
-        return self.environ.get('SCRIPT_NAME', '')
+        return wsgi_string_decode(self.environ.get('SCRIPT_NAME', ''))
 
     @property
     def server_name(self):

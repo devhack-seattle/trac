@@ -702,6 +702,48 @@ new\r\n\
             req.send(b'')
         self.assertEqual(etag, req.headers_sent['ETag'])
 
+    def test_path_info(self):
+
+        def test(expected, value):
+            environ = _make_environ(PATH_INFO=value)
+            self.assertEqual(expected, _make_req(environ).path_info)
+
+        test('', '')
+        test('/wiki/WikiStart', '/wiki/WikiStart')
+        test('/wiki/TæstPäge', '/wiki/T\xc3\xa6stP\xc3\xa4ge')
+
+    def test_query_string(self):
+
+        def test(expected, value):
+            environ = _make_environ(QUERY_STRING=value)
+            self.assertEqual(expected, _make_req(environ).query_string)
+
+        test('', '')
+        test('status=defect&milestone=milestone1',
+             'status=defect&milestone=milestone1')
+        test('status=defećt&milestóne=milestone1',
+             'status=defe\xc4\x87t&milest\xc3\xb3ne=milestone1')
+
+    def test_base_path(self):
+
+        def test(expected, value):
+            environ = _make_environ(SCRIPT_NAME=value)
+            self.assertEqual(expected, _make_req(environ).base_path)
+
+        test('', '')
+        test('/1.6-stable', '/1.6-stable')
+        test('/Prøjeçt-42', '/Pr\xc3\xb8je\xc3\xa7t-42')
+
+    def test_remote_user(self):
+
+        def test(expected, value):
+            environ = _make_environ(REMOTE_USER=value)
+            self.assertEqual(expected, _make_req(environ).remote_user)
+
+        test('', '')
+        test('joe', 'joe')
+        test('jöhn', 'j\xc3\xb6hn')
+
 
 class RequestSendFileTestCase(unittest.TestCase):
 
