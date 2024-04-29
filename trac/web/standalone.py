@@ -32,6 +32,7 @@ from socketserver import ThreadingMixIn
 from trac import __version__ as VERSION
 from trac.util import autoreload, daemon
 from trac.util.text import printerr
+from trac.web.api import wsgi_string_encode
 from trac.web.auth import BasicAuthentication, DigestAuthentication
 from trac.web.main import dispatch_request
 from trac.web.wsgi import WSGIServer, WSGIRequestHandler
@@ -59,7 +60,7 @@ class AuthenticationMiddleware(object):
                     remote_user = auth.do_auth(environ, start_response)
                     if not remote_user:
                         return []
-                    environ['REMOTE_USER'] = remote_user
+                    environ['REMOTE_USER'] = wsgi_string_encode(remote_user)
         return self.application(environ, start_response)
 
 
