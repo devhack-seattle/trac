@@ -31,6 +31,13 @@ build_svnpy() {
     curl -s -o "$svntarball" "$svnurl"
     tar xjf "$svntarball" -C "$GITHUB_WORKSPACE"
     cd "$GITHUB_WORKSPACE/subversion-$svnver"
+    case "$svnver" in
+    1.14.[012])
+        git apply -v -p0 --whitespace=fix \
+            "$GITHUB_WORKSPACE/.github/svn-swig41.patch" \
+            "$GITHUB_WORKSPACE/.github/svn-py312.patch"
+        ;;
+    esac
     "$python" gen-make.py --release --installed-libs "$installed_libs"
     ./configure --prefix="$venvdir" \
                 --with-apr="$with_apr" \
