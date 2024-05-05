@@ -35,15 +35,15 @@ jobs:
     steps:
 
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Set up pip cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ matrix.os }}--pip-py${{ matrix.python-version }}--${{ hashFiles('.github/requirements-minimum.txt') }}
@@ -101,21 +101,21 @@ jobs:
     steps:
 
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Set up pip cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ matrix.os }}--pip-py${{ matrix.python-version }}--${{ hashFiles('.github/requirements.txt') }}
 
     - name: Set up svn python cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/venv/lib/libsvn_*
@@ -166,28 +166,28 @@ jobs:
     steps:
 
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Checkout py3c
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: encukou/py3c
         ref: v1.4
         path: py3c
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Set up pip cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ matrix.os }}--pip-py${{ matrix.python-version }}--${{ hashFiles('.github/requirements.txt') }}
 
     - name: Set up svn python cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/venv/lib/libsvn_*
@@ -224,15 +224,15 @@ jobs:
     steps:
 
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Set up pip cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~\AppData\Local\pip\Cache
         key: ${{ matrix.os }}--pip-py${{ matrix.python-version }}--${{ hashFiles('.github/requirements-minimum.txt') }}
@@ -286,21 +286,21 @@ jobs:
     steps:
 
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Set up pip cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~\AppData\Local\pip\Cache
         key: ${{ matrix.os }}--pip-py${{ matrix.python-version }}--${{ hashFiles('.github/requirements.txt') }}
 
     - name: Set up svn cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~\AppData\Local\subversion-${{ matrix.subversion-version }}\${{ matrix.architecture }}
         key: ${{ matrix.os }}--${{ matrix.architecture }}-svn${{ matrix.subversion-version }}-py${{ matrix.python-version }}
@@ -347,34 +347,34 @@ jobs:
     steps:
 
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Checkout py3c
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: encukou/py3c
         ref: v1.4
         path: py3c
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Set up pip cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~\AppData\Local\pip\Cache
         key: ${{ matrix.os }}--pip-py${{ matrix.python-version }}--${{ hashFiles('.github/requirements.txt') }}
 
     - name: Set up svn cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~\AppData\Local\subversion-${{ matrix.subversion-version }}\${{ matrix.architecture }}
         key: ${{ matrix.os }}--${{ matrix.architecture }}-svn${{ matrix.subversion-version }}-py${{ matrix.python-version }}
 
     - name: Set up vcpkg cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~\AppData\Local\vcpkg\archives
@@ -423,15 +423,15 @@ jobs:
     steps:
 
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Set up pip cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ matrix.os }}--pip-py${{ matrix.python-version }}--${{ hashFiles('.github/requirements.txt') }}
