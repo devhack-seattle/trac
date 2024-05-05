@@ -52,7 +52,7 @@ jobs:
       run: . .github/posix-test-minimum.sh
 
     - name: Upload log files
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: log-${{ matrix.os }}--py${{ matrix.python-version }}-minimum-${{ job.status }}
@@ -127,7 +127,7 @@ jobs:
       run: . .github/posix-test.sh
 
     - name: Upload log files
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: log-${{ matrix.os }}--py${{ matrix.python-version }}-${{ matrix.tracdb }}-${{ job.status }}
@@ -241,7 +241,7 @@ jobs:
       run: . .github\windows-test-minimum.ps1
 
     - name: Upload log files
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: log-${{ matrix.os }}--py${{ matrix.python-version }}-minimum-${{ job.status }}
@@ -309,7 +309,7 @@ jobs:
       run: . .github\windows-test.ps1
 
     - name: Upload log files
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: log-${{ matrix.os }}--py${{ matrix.python-version }}-${{ matrix.tracdb }}-${{ job.status }}
@@ -382,13 +382,13 @@ jobs:
         key: ${{ matrix.os }}--${{ matrix.architecture }}-vcpkg--${{ hashFiles('.github/vcpkg.txt') }}
 
     - name: Set up msbuild
-      uses: microsoft/setup-msbuild@v1.1
+      uses: microsoft/setup-msbuild@v2
 
     - name: Prepare dependencies
       run: . .github\windows-prepare.ps1
 
     - name: Upload log files
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: svnlog-${{ matrix.os }}-${{ matrix.architecture }}--${{ matrix.subversion-version }}-py${{ matrix.python-version }}
@@ -396,7 +396,7 @@ jobs:
         if-no-files-found: ignore
 
     - name: Upload Subversion binaries
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: svnbin-${{ matrix.os }}-${{ matrix.architecture }}--${{ matrix.subversion-version }}-py${{ matrix.python-version }}
@@ -440,7 +440,7 @@ jobs:
       run: . .github/release.sh
 
     - name: Upload release packages
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: release
         path: dist/Trac-*
