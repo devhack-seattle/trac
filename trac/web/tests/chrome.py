@@ -1230,6 +1230,45 @@ class ChromeTemplateRenderingTestCase(unittest.TestCase):
                       b'common/css/blahblah.css", "text/css");', content)
         self.assertIn(b' var blahblah=42;', content)
 
+    def test_render_template_i18n_domain(self):
+        """Regression test for #13745"""
+
+        template = textwrap.dedent("""\
+            ${_("anonymous")}
+            ${gettext("Admin")}
+            ${ngettext("%(num)d byte", "%(num)d bytes", num=num)}
+            ${tag_("You may use %(wikiformatting)s here.",
+                   wikiformatting=tag.b('WikiFormatting'))}
+            ${tagn_("%(value)s added", "%(value)s added", len(values),
+                    value=values|join(' '))}
+            ${dgettext("messages", "Timeline")}
+            ${dngettext("messages", "%(num)d day", "%(num)d days", num)}
+            ${dtgettext("messages", "Quickjump to %(name)s",
+                        name=tag.b('WikiStart'))}
+            ${dtngettext("messages", "%(value)s removed", "%(value)s removed",
+                         len(values), value=values|join(' '))}
+        """)
+        filename = 'ticket13745.html'
+        filepath = os.path.join(self.env.templates_dir, filename)
+        create_file(filepath, template)
+
+        def test(domain=None):
+            req = MockRequest(self.env)
+            data = {'num': 42, 'values': ['foo', 'bar']}
+            metadata = {'iterable': False}
+            if domain:
+                metadata['domain'] = domain
+            content = str(self.chrome.render_template(req, filename, data,
+                                                      metadata), 'utf-8')
+            self.assertEqual([
+                'anonymous', 'Admin', '42 bytes',
+                'You may use <b>WikiFormatting</b> here.', 'foo bar added',
+                'Timeline', '42 days', 'Quickjump to <b>WikiStart</b>',
+                'foo bar removed'], content.splitlines())
+
+        test(domain=None)
+        test(domain='messages')
+
 
 def test_suite():
     suite = unittest.TestSuite()
