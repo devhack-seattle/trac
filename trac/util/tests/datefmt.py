@@ -1184,7 +1184,8 @@ else:
             vi = Locale.parse('vi')
             self.assertIn(datefmt.format_datetime(t, tzinfo=tz, locale=vi),
                           ('13:45:56 28-08-2010',        # Babel < 2.2.0
-                           '13:45:56, 28 thg 8, 2010'))  # Babel 2.2.0
+                           '13:45:56, 28 thg 8, 2010',   # Babel >= 2.2.0
+                           '13:45:56 28 thg 8, 2010'))   # Babel >= 2.15.0
             zh_CN = Locale.parse('zh_CN')
             self.assertIn(datefmt.format_datetime(t, tzinfo=tz, locale=zh_CN),
                           ('2010-8-28 下午01:45:56',
@@ -1266,7 +1267,8 @@ else:
             self.assertIn(datefmt.get_datetime_format_hint(vi),
                           ('HH:mm:ss dd-MM-yyyy',
                            'HH:mm:ss dd-MM-y',
-                           'HH:mm:ss, d MMM, y'))  # Babel 2.2.0
+                           'HH:mm:ss, d MMM, y',   # Babel >= 2.2.0
+                           'HH:mm:ss d MMM, y'))   # Babel >= 2.15.0
             self.assertIn(datefmt.get_datetime_format_hint(zh_CN),
                           ('yyyy-M-d ahh:mm:ss',
                            'y年M月d日 ah:mm:ss',
