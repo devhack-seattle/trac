@@ -24,10 +24,11 @@ from trac.test import Mock, MockRequest, makeSuite
 from trac.util.datefmt import utc
 from trac.util.text import to_utf8
 from trac.versioncontrol.api import (
-    Changeset, DbRepositoryProvider, IRepositoryConnector, Node, NoSuchNode,
-    Repository, RepositoryManager)
+    Changeset, DbRepositoryProvider, IRepositoryConnector, Node,
+    NoSuchChangeset, NoSuchNode, Repository, RepositoryManager)
 from trac.versioncontrol.web_ui.browser import BrowserModule, IPropertyRenderer
 from trac.web.api import RequestDone
+from trac.web.chrome import Chrome
 from trac.web.tests.api import RequestHandlerPermissionsTestCaseBase
 
 
@@ -40,6 +41,7 @@ class MockRepositoryConnector(Component):
 
     def get_repository(self, repos_type, repos_dir, params):
         t = datetime(2017, 3, 31, 12, 34, 56, tzinfo=utc)
+        youngest_rev = 1
 
         def get_changeset(rev):
             return Mock(Changeset, repos, rev, 'message', 'author', t)
@@ -74,13 +76,24 @@ class MockRepositoryConnector(Component):
                         get_last_modified=lambda: t)
             return node
 
+        def normalize_rev(rev):
+            try:
+                r = int(rev)
+            except:
+                pass
+            else:
+                if 0 <= r <= youngest_rev:
+                    return r
+            raise NoSuchChangeset(rev)
+
         if params['name'] == 'raise':
             raise TracError("")
         else:
             repos = Mock(Repository, params['name'], params, self.log,
-                         get_youngest_rev=lambda: 1,
+                         get_youngest_rev=lambda: youngest_rev,
                          get_changeset=get_changeset,
                          get_node=get_node,
+                         normalize_rev=normalize_rev,
                          previous_rev=lambda rev, path='': None,
                          next_rev=lambda rev, path='': None)
         return repos
@@ -257,6 +270,26 @@ anonymous = !BROWSER_VIEW, !FILE_VIEW
             self.assertEqual('deny-file', e.resource.id)
             self.assertEqual('repository', e.resource.parent.realm)
             self.assertEqual('', e.resource.parent.id)
+
+    def test_node_with_blame_view(self):
+        provider = DbRepositoryProvider(self.env)
+        provider.add_repository('metachars-&<>"\'-', '/', 'mock')
+        self.grant_perm('anonymous', 'BROWSER_VIEW', 'FILE_VIEW')
+
+        req = MockRequest(self.env, authname='anonymous',
+                          path_info='/browser/metachars-&<>"\'-/-&<>"\'-file',
+                          args={'annotate': 'blame'})
+        rv = self.process_request(req)
+        fragment = str(Chrome(self.env).render_fragment(req, *rv))
+        for line in fragment.splitlines():
+            if ' enableBlame(' in line:
+                break
+        else:
+            self.fail('Missing enableBlame(...) line')
+        self.assertEqual(r'''enableBlame("/trac.cgi/changeset/"'''
+                         r''', "metachars-\u0026\u003c\u003e\"'-"'''
+                         r''', "-\u0026\u003c\u003e\"'-file");''',
+                         line.strip())
 
     def test_node_in_allowed_repos_with_file_view(self):
         self.grant_perm('anonymous', 'BROWSER_VIEW', 'FILE_VIEW')
