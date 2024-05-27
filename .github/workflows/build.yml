@@ -103,6 +103,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
+    - name: Workaround for certificate verify failed from pip with Python 3.5
+      if: ${{ matrix.python-version == '3.5' }}
+      run: |
+        echo 'PIP_TRUSTED_HOST=pypi.python.org pypi.org files.pythonhosted.org' >>"$GITHUB_ENV"
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
@@ -174,6 +179,11 @@ jobs:
         repository: encukou/py3c
         ref: v1.4
         path: py3c
+
+    - name: Workaround for certificate verify failed from pip with Python 3.5
+      if: ${{ matrix.python-version == '3.5' }}
+      run: |
+        echo 'PIP_TRUSTED_HOST=pypi.python.org pypi.org files.pythonhosted.org' >>"$GITHUB_ENV"
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
