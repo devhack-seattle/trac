@@ -696,7 +696,7 @@ class TestNewReport(FunctionalTestCaseSetup):
                id AS ticket,
                summary, component, milestone, t.type AS type,
                reporter, time AS created,
-               changetime AS modified, description AS _description,
+               changetime AS modified, t.description AS _description,
                priority,
                round(julianday('now') -
                      julianday(changetime, 'unixepoch')) as days,
