@@ -44,7 +44,8 @@ class MockRepositoryConnector(Component):
         youngest_rev = 1
 
         def get_changeset(rev):
-            return Mock(Changeset, repos, rev, 'message', 'author', t)
+            message = 'Rev %s' % rev
+            return Mock(Changeset, repos, rev, message, 'author', t)
 
         def get_node(path, rev):
             if 'missing' in path:
@@ -53,6 +54,12 @@ class MockRepositoryConnector(Component):
             if 'file' in basename:
                 kind = Node.FILE
                 entries = ()
+                if 'empty' in basename:
+                    content = b''
+                    annotations = []
+                else:
+                    content = b'Contents for %s' % to_utf8(path)
+                    annotations = [rev]
             else:
                 kind = Node.DIRECTORY
                 if 'dir' in basename:
@@ -60,7 +67,9 @@ class MockRepositoryConnector(Component):
                 else:
                     entries = ['dir1', 'dir2']
                 entries = [posixpath.join(path, entry) for entry in entries]
-            content = b'Contents for %s' % to_utf8(path)
+                content = b''
+            history = [(path, r, Changeset.ADD if r == rev else Changeset.EDIT)
+                       for r in range(rev, 0, -1)]
             properties = {}
             if 'properties' in path:
                 properties['mock-1'] = 1
@@ -72,8 +81,10 @@ class MockRepositoryConnector(Component):
                         get_properties=lambda: properties,
                         get_content=lambda: io.BytesIO(content),
                         get_content_length=lambda: len(content),
-                        get_content_type=lambda: 'application/octet-stream',
-                        get_last_modified=lambda: t)
+                        get_content_type=lambda: 'text/plain',
+                        get_last_modified=lambda: t,
+                        get_annotations=lambda: annotations,
+                        get_history=lambda: iter(history))
             return node
 
         def normalize_rev(rev):
@@ -281,6 +292,9 @@ anonymous = !BROWSER_VIEW, !FILE_VIEW
                           args={'annotate': 'blame'})
         rv = self.process_request(req)
         fragment = str(Chrome(self.env).render_fragment(req, *rv))
+        self.assertIn(
+            {'attrs': {'src': '/trac.cgi/chrome/common/js/blame.js'}},
+            req.chrome['scripts'])
         for line in fragment.splitlines():
             if ' enableBlame(' in line:
                 break
@@ -290,6 +304,20 @@ anonymous = !BROWSER_VIEW, !FILE_VIEW
                          r''', "metachars-\u0026\u003c\u003e\"'-"'''
                          r''', "-\u0026\u003c\u003e\"'-file");''',
                          line.strip())
+
+    def test_empty_node_with_blame_view(self):
+        self.grant_perm('anonymous', 'BROWSER_VIEW', 'FILE_VIEW')
+
+        req = MockRequest(self.env, authname='anonymous',
+                          path_info='/browser/allow/empty-file',
+                          args={'annotate': 'blame'})
+        rv = self.process_request(req)
+        self.assertEqual(0, rv[1]['file']['size'])
+        fragment = Chrome(self.env).render_fragment(req, *rv)
+        self.assertIn(
+            {'attrs': {'src': '/trac.cgi/chrome/common/js/blame.js'}},
+            req.chrome['scripts'])
+        self.assertIn('(The file is empty)', fragment)
 
     def test_node_in_allowed_repos_with_file_view(self):
         self.grant_perm('anonymous', 'BROWSER_VIEW', 'FILE_VIEW')
