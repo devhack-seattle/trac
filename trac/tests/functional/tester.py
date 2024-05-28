@@ -423,6 +423,7 @@ class FunctionalTester(object):
         tc.formvalue('edit_report', 'query', query)
         tc.submit()
         tc.notfind(internal_error)
+        tc.find(r'>\s*The report has been created\.\s*<')
 
         url = b.get_url()
         reportnum = None
