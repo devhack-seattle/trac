@@ -72,8 +72,24 @@ def _make_environ(scheme='http', server_name='example.org',
     environ.update(kwargs)
     for key, value in environ.items():
         if isinstance(value, bytes):
-            environ[key] = str(value, 'utf-8')
+            environ[key] = str(value, 'iso-8859-1')  # WSGI "bytes-as-unicode"
     return environ
+
+
+def _make_environ_qs(method='GET', query_string=b'', **kwargs):
+    if isinstance(query_string, str):
+        query_string = query_string.encode('utf-8')
+    if method == 'GET':
+        kw = {'QUERY_STRING': str(query_string, 'iso-8859-1')} \
+             if query_string else {}
+    elif method == 'POST':
+        kw = {'wsgi.input': io.BytesIO(query_string),
+              'CONTENT_LENGTH': str(len(query_string)),
+              'CONTENT_TYPE': 'application/x-www-form-urlencoded'}
+    else:
+        raise AssertionError('Wrong method {!r}'.format(method))
+    kw.update(kwargs)
+    return _make_environ(method=method, **kw)
 
 
 def _make_req(environ, authname='admin', chrome=None, form_token='A' * 40,
@@ -470,7 +486,8 @@ new\r\n\
         req = Request(environ, None)
         self.assertEqual(b'test', req.read(size=4))
 
-    def _test_qs_with_null_bytes(self, environ):
+    def _test_qs_with_null_bytes(self, method, qs):
+        environ = _make_environ_qs(method=method, query_string=qs)
         req = Request(environ, None)
         try:
             req.args['action']
@@ -481,12 +498,23 @@ new\r\n\
             self.fail("HTTPBadRequest not raised.")
 
     def test_qs_with_null_bytes_for_name(self):
-        environ = _make_environ(method='GET', QUERY_STRING='acti\x00n=fOO')
-        self._test_qs_with_null_bytes(environ)
+        qs = b'acti\x00n=fOO'
+        self._test_qs_with_null_bytes('GET', qs)
+        self._test_qs_with_null_bytes('POST', qs)
 
     def test_qs_with_null_bytes_for_value(self):
-        environ = _make_environ(method='GET', QUERY_STRING='action=f\x00O')
-        self._test_qs_with_null_bytes(environ)
+        qs = b'action=f\x00O'
+        self._test_qs_with_null_bytes('GET', qs)
+        self._test_qs_with_null_bytes('POST', qs)
+
+    def test_non_strict_qs(self):
+        qs = b'type=defect&owner=&or&type=&owner=john&=unnamed'
+        expected = [('type', 'defect'), ('owner', ''), ('or', ''),
+                    ('type', ''), ('owner', 'john'), ('', 'unnamed')]
+        req = Request(_make_environ_qs('GET', qs), None)
+        self.assertEqual(expected, req.arg_list)
+        req = Request(_make_environ_qs('POST', qs), None)
+        self.assertEqual(expected, req.arg_list)
 
     def test_post_with_unnamed_value(self):
         boundary = '_BOUNDARY_'
