@@ -524,7 +524,7 @@ if multipart:
             data = environ['wsgi.input'].read(length)
             pairs = urllib.parse.parse_qsl(
                 str(data, 'utf-8'), keep_blank_values=True,
-                strict_parsing=True, encoding='utf-8', errors='strict')
+                strict_parsing=False, encoding='utf-8', errors='strict')
             for name, value in pairs:
                 _raise_if_null_bytes(name)
                 _raise_if_null_bytes(value)
