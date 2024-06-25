@@ -443,6 +443,17 @@ new\r\n\
         with self.assertRaises(ValueError):
             req.write((b'F', 'öo'))
 
+    def test_send_bytes(self):
+        req = _make_req(_make_environ(method='GET'))
+        with self.assertRaises(RequestDone):
+            req.send(b'\xef\xbb\xbf')
+        self.assertEqual('3', req.headers_sent.get('Content-Length'))
+
+    def test_send_unicode(self):
+        req = _make_req(_make_environ(method='GET'))
+        with self.assertRaises(ValueError):
+            req.send(u'\ufeff')
+
     def test_send_iterable(self):
         def iterable():
             yield b'line1,'
