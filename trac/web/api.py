@@ -982,6 +982,8 @@ class Request(object):
         there are multiple calls to `write`, to the cumulative length
         of the *data* arguments.
         """
+        if isinstance(data, str):
+            raise ValueError("Can't send str content")
         if not self._write:
             self.end_headers()
         try:

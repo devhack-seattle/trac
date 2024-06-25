@@ -441,7 +441,11 @@ new\r\n\
         with self.assertRaises(ValueError):
             req.write('Föö')
         with self.assertRaises(ValueError):
+            req.write('')
+        with self.assertRaises(ValueError):
             req.write((b'F', 'öo'))
+        with self.assertRaises(ValueError):
+            req.write(('Föo'.encode('utf-8'), ''))
 
     def test_send_bytes(self):
         req = _make_req(_make_environ(method='GET'))
