@@ -982,6 +982,8 @@ class Request(object):
         there are multiple calls to `write`, to the cumulative length
         of the *data* arguments.
         """
+        if isinstance(data, str):
+            raise ValueError("Can't send str content")
         if not self._write:
             self.end_headers()
         try:
@@ -1028,7 +1030,7 @@ class Request(object):
         self.send_header('Cache-Control', 'must-revalidate')
         self.send_header('Expires', 'Fri, 01 Jan 1999 00:00:00 GMT')
         self.send_header('Content-Type', content_type + ';charset=utf-8')
-        if isinstance(content, str):
+        if isinstance(content, bytes):
             self.send_header('Content-Length', len(content))
         self.end_headers(exc_info)
 
