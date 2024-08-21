@@ -19,6 +19,7 @@
 from contextlib import contextmanager
 import hashlib
 import os.path
+import os
 import setuptools
 import shutil
 import sys
@@ -596,7 +597,7 @@ class Environment(Component, ComponentManager):
     def setup_config(self):
         """Load the configuration file."""
         self.config = Configuration(self.config_file_path,
-                                    {'envname': self.name})
+                                    {**os.environ, 'envname': self.name})
         if not self.config.exists:
             raise TracError(_("The configuration file is not found at "
                               "%(path)s", path=self.config_file_path))

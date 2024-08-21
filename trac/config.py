@@ -16,7 +16,7 @@ import copy
 import os.path
 import re
 from configparser import (ConfigParser, NoOptionError, NoSectionError,
-                          ParsingError)
+                          ParsingError, BasicInterpolation)
 
 from trac.admin import AdminCommandError, IAdminCommandProvider
 from trac.core import Component, ExtensionPoint, TracError, implements
@@ -90,7 +90,7 @@ class UnicodeConfigParser(ConfigParser):
 
     def __init__(self, ignorecase_option=True, **kwargs):
         self._ignorecase_option = ignorecase_option
-        kwargs.setdefault('interpolation', None)
+        kwargs.setdefault('interpolation', BasicInterpolation())
         ConfigParser.__init__(self, **kwargs)
 
     def optionxform(self, option):
@@ -142,12 +142,12 @@ class Configuration(object):
     """
     def __init__(self, filename, params={}):
         self.filename = filename
-        self.parser = UnicodeConfigParser()
+        self.parser = UnicodeConfigParser(defaults=params)
         self._pristine_parser = None
         self.parents = []
         self._lastmtime = 0
         self._sections = {}
-        self.parse_if_needed(force=True)
+        self.parse_if_needed(force=True, params=params)
 
     def __repr__(self):
         return '<%s %r>' % (self.__class__.__name__, self.filename)
@@ -345,14 +345,14 @@ class Configuration(object):
         else:
             self._pristine_parser = copy.deepcopy(self.parser)
 
-    def parse_if_needed(self, force=False):
+    def parse_if_needed(self, force=False, params={}):
         if not self.filename or not self.exists:
             return False
 
         changed = False
         modtime = os.path.getmtime(self.filename)
         if force or modtime != self._lastmtime:
-            self.parser = UnicodeConfigParser()
+            self.parser = UnicodeConfigParser(defaults=params)
             try:
                 if not self.parser.read(self.filename):
                     raise TracError(_("Error reading '%(file)s', make sure "
